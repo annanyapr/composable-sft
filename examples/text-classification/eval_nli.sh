@@ -1,8 +1,20 @@
 #!/bin/bash
-LANG=gn # Guarani
+
+# Check if language argument is provided
+if [ -z "$1" ]; then
+  echo "Usage: $0 <LANG> [multi]"
+  exit 1
+fi
+
+LANG=$1
 LANG_FT=cambridgeltl/xlmr-lang-sft-${LANG}-small
-#TASK_FT=cambridgeltl/xlmr-task-sft-nli  # Single-source task SFT
-TASK_FT=cambridgeltl/xlmr-task-sft-nli-ms
+
+# Set TASK_FT based on the second argument
+if [ "$2" == "multi" ]; then
+  TASK_FT=cambridgeltl/xlmr-task-sft-nli-ms  # Multi-source task SFT
+else
+  TASK_FT=cambridgeltl/xlmr-task-sft-nli  # Single-source task SFT
+fi
 
 RESULTS_DIR=results/AmericasNLI/${LANG}
 mkdir -p $RESULTS_DIR
