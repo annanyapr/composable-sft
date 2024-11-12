@@ -494,5 +494,13 @@ def main():
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
 
+        predictions, labels, _ = trainer.predict(eval_dataset)
+        predicted_classes = np.argmax(predictions, axis=1)
+        eval_data = eval_dataset.to_pandas()  # Convert to a DataFrame if supported
+        eval_data['true_labels'] = labels
+        eval_data['predicted_labels'] = predicted_classes
+        output_file_path = os.path.join(training_args.output_dir, "eval_predictions.csv")
+        eval_data.to_csv(output_file_path, index=False)
+
 if __name__ == "__main__":
     main()
