@@ -1,0 +1,7 @@
+{
+    "^roberta\\.embeddings\\.": 0.02,
+    "^roberta\\.encoder\\.layer\\.10\\.": 0.02,
+    "^roberta\\.encoder\\.layer\\.11\\.": 0.02,
+    "^roberta\\.encoder\\.layer\\.[0-9]\\.": 0.94
+}
+  

@@ -209,6 +209,22 @@ def main():
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, SftArguments, TrainingArguments))
     model_args, data_args, sft_args, training_args = parser.parse_args_into_dataclasses()
 
+    # Read selected layers from file if provided
+    if sft_args.selected_layers_file is not None:
+        with open(sft_args.selected_layers_file, 'r') as f:
+            selected_layers = json.load(f)
+        logger.info(f"Selected layers for fine-tuning: {selected_layers}")
+    else:
+        selected_layers = None  # Or an empty list if preferred
+
+    # Read per-layer percentages from file if provided
+    if sft_args.per_layer_percentages_file is not None:
+        with open(sft_args.per_layer_percentages_file, 'r') as f:
+            per_layer_percentages = json.load(f)
+        logger.info(f"Per-layer percentages for fine-tuning: {per_layer_percentages}")
+    else:
+        per_layer_percentages = None
+
     # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -458,6 +474,9 @@ def main():
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         source_sfts=lang_sfts,
+        unfreeze_strategy=sft_args.unfreeze_strategy,
+        selected_layers=selected_layers,
+        per_layer_percentage=per_layer_percentages,
     )
 
     # Training
