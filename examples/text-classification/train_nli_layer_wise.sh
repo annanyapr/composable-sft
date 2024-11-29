@@ -32,4 +32,4 @@ python run_text_classification.py \
   --validation_split validation_matched \
   --save_total_limit 2 \
   --unfreeze_strategy per_layer_percentage \
-  --per_layer_percentages_file ./per_layer_percentages.txt
+  --per_layer_percentages_file ./per_layer_percentage.json
