@@ -16,7 +16,7 @@ def LotteryTicketSparseFineTuner(_Trainer):
 
     class _LotteryTicketSparseFineTuner(_SparseFineTuner):
 
-        def __init__(self, unfreeze_strategy='global', **kwargs): ## unfreeze_strategy: 'global' or 'layer_wise_selection'
+        def __init__(self, unfreeze_strategy='global', selected_layers=None, per_layer_percentage=None, **kwargs): ## unfreeze_strategy: 'global' or 'layer_wise_selection'
             super().__init__(**kwargs)
             logger.setLevel(self.args.get_process_log_level())
             if self.sft_args.ft_params_num is None:
@@ -26,9 +26,11 @@ def LotteryTicketSparseFineTuner(_Trainer):
             else:
                 self.n_tunable_params = self.sft_args.ft_params_num
             self.unfreeze_strategy = unfreeze_strategy
-            self.selected_layers = kwargs.get('selected_layers', []) ## prefix of the layer names which are selected for fine-tuning, if nothing provided then assume that all layers are allowed to be fine-tuned 
+            self.selected_layers = selected_layers ## prefix of the layer names which are selected for fine-tuning, if nothing provided then assume that all layers are allowed to be fine-tuned 
             if self.unfreeze_strategy == 'layer_wise_selection':
-                self.per_layer_percentage = kwargs.get('per_layer_percentage') ## dictionary
+                self.per_layer_percentage = per_layer_percentage ## dictionary
+                if self.per_layer_percentage is None:
+                    raise ValueError('per_layer_percentage must be provided if unfreeze_strategy is layer_wise_selection')
                 self.per_layer_parameters_tuned = {}
                 for pattern_str, percentage in self.per_layer_percentage.items():
                     self.per_layer_parameters_tuned[pattern_str] = int(percentage * self.n_tunable_params)
