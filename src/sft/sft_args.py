@@ -4,6 +4,20 @@ from typing import Optional
 @dataclass
 class SftArguments:
     "Arguments pertaining to sparse fine-tuning configuration."""
+    unfreeze_strategy: Optional[str] = field(
+        default='global',
+        metadata={"help": "Unfreeze strategy: 'global'or 'per_layer_percentage'."}
+    )
+    selected_layers_file: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to a JSON file containing a list of selected layers for fine-tuning."}
+    )
+
+    ## The layer names are actually regex
+    per_layer_percentages_file: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to a JSON file containing a dictionary of per-layer percentages for fine-tuning."}
+    )
     
     lang_ft: Optional[str] = field(
         default=None, metadata={"help": "Path to saved language SparseFineTuning."}
