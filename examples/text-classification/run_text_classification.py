@@ -218,8 +218,8 @@ def main():
         selected_layers = None  # Or an empty list if preferred
 
     # Read per-layer percentages from file if provided
-    if sft_args.per_layer_percentages_file is not None:
-        with open(sft_args.per_layer_percentages_file, 'r') as f:
+    if sft_args.per_layer_percentage_file is not None:
+        with open(sft_args.per_layer_percentage_file, 'r') as f:
             per_layer_percentages = json.load(f)
         logger.info(f"Per-layer percentages for fine-tuning: {per_layer_percentages}")
     else:
