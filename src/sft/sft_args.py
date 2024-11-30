@@ -6,7 +6,7 @@ class SftArguments:
     "Arguments pertaining to sparse fine-tuning configuration."""
     unfreeze_strategy: Optional[str] = field(
         default='global',
-        metadata={"help": "Unfreeze strategy: 'global'or 'per_layer_percentage'."}
+        metadata={"help": "Unfreeze strategy: 'global'or 'layer_wise_selection'."}
     )
     selected_layers_file: Optional[str] = field(
         default=None,
@@ -14,9 +14,9 @@ class SftArguments:
     )
 
     ## The layer names are actually regex
-    per_layer_percentages_file: Optional[str] = field(
+    per_layer_percentage_file: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to a JSON file containing a dictionary of per-layer percentages for fine-tuning."}
+        metadata={"help": "Path to a JSON file containing a dictionary of per-layer percentage for fine-tuning."}
     )
     
     lang_ft: Optional[str] = field(

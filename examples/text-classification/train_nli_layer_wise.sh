@@ -31,5 +31,5 @@ python run_text_classification.py \
   --load_best_model_at_end \
   --validation_split validation_matched \
   --save_total_limit 2 \
-  --unfreeze_strategy per_layer_percentage \
-  --per_layer_percentages_file ./per_layer_percentage.json
+  --unfreeze_strategy layer_wise_selection \
+  --per_layer_percentage_file ./per_layer_percentage.json
