@@ -6,7 +6,7 @@ class SftArguments:
     "Arguments pertaining to sparse fine-tuning configuration."""
     unfreeze_strategy: Optional[str] = field(
         default='global',
-        metadata={"help": "Unfreeze strategy: 'global'or 'layer_wise_selection'."}
+        metadata={"help": "Unfreeze strategy: 'global', 'layer_wise_selection' or 'random'."}
     )
     selected_layers_file: Optional[str] = field(
         default=None,

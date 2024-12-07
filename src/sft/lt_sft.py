@@ -3,6 +3,7 @@ import os
 import re
 import numpy as np
 import torch
+import random
 from tqdm import tqdm
 
 from .trainer import SparseFineTuner
@@ -118,44 +119,39 @@ def LotteryTicketSparseFineTuner(_Trainer):
                             self._mask[n] = to_mask | self._mask[n]
                             n_masked += to_mask.sum()
                             logger.info(f'Setting masks for layer {n}')      
-                    logger.info(f'Unmasked {n_masked} params in {pattern_str}')       
+                    logger.info(f'Unmasked {n_masked} params in {pattern_str}')
+
+        def unfreeze_k_random_params(self, k):
+            with torch.no_grad():
+                # Gather all currently frozen (masked) parameter indices
+                frozen_params = []
+                for n, p in self.model.named_parameters():
+                    if n in self.maskable_params:
+                        mask_flat = (~self._mask[n]).view(-1).nonzero(as_tuple=False).view(-1)
+                        for idx in mask_flat.tolist():
+                            frozen_params.append((n, idx))
+
+                if k > len(frozen_params):
+                    raise ValueError(
+                        f'Was requested to unfreeze {k} params, but only {len(frozen_params)} are masked.'
+                    )
+
+                chosen_params = random.sample(frozen_params, k)
+                for (n, idx) in chosen_params:
+                    self._mask[n].view(-1)[idx] = True
+                logger.info(f'Unmasked {k} random params')       
 
 
         def train(self, **kwargs):
             self.freeze()
             result = None
-            
-            for it in range(self.sft_args.n_ft_iterations):
-                logger.info(f'Fine-tuning iteration {it+1}')
-                with torch.no_grad():
-                    previous_params = {
-                        n: torch.zeros_like(p, device='cpu').copy_(p)
-                        for n, p in self.model.named_parameters()
-                    }
+            ## the below is alwys run with single ft iteration
+            assert self.sft_args.n_ft_iterations == 1
+            if self.unfreeze_strategy == 'random':
 
-                self.disable_masking()
-                self.optimizer = None
-                self.lr_scheduler = None
-                self.set_training_len(
-                    self.sft_args.full_ft_min_steps_per_iteration,
-                    self.sft_args.full_ft_max_steps_per_iteration,
-                    self.sft_args.full_ft_max_epochs_per_iteration,
-                )
-                super().train(**kwargs)
-
-                if self.unfreeze_strategy == 'global':
-                    self.unfreeze_k_most_changed_params(
-                        self.n_tunable_params // self.sft_args.n_ft_iterations
-                    )
-                elif self.unfreeze_strategy == 'layer_wise_selection':
-                    self.unfreeze_k_most_changed_params_per_layer_percentage()
-                else:
-                    raise ValueError(f"Unknown unfreeze_strategy: {self.unfreeze_strategy}")
-                                
-                with torch.no_grad():
-                    for n, p in self.model.named_parameters():
-                        p.copy_(previous_params[n])
-
+                self.unfreeze_k_random_params(self.n_tunable_params)
+                
+                # Enable masking since we now have a mask that includes the randomly chosen params
                 self.enable_masking()
                 self.optimizer = None
                 self.lr_scheduler = None
@@ -164,7 +160,49 @@ def LotteryTicketSparseFineTuner(_Trainer):
                     self.sft_args.sparse_ft_max_steps_per_iteration,
                     self.sft_args.sparse_ft_max_epochs_per_iteration,
                 )
+                # Perform the sparse fine-tuning iteration
                 result = super().train(**kwargs)
+            else:
+                for it in range(self.sft_args.n_ft_iterations):
+                    logger.info(f'Fine-tuning iteration {it+1}')
+                    with torch.no_grad():
+                        previous_params = {
+                            n: torch.zeros_like(p, device='cpu').copy_(p)
+                            for n, p in self.model.named_parameters()
+                        }
+
+                    self.disable_masking()
+                    self.optimizer = None
+                    self.lr_scheduler = None
+                    self.set_training_len(
+                        self.sft_args.full_ft_min_steps_per_iteration,
+                        self.sft_args.full_ft_max_steps_per_iteration,
+                        self.sft_args.full_ft_max_epochs_per_iteration,
+                    )
+                    super().train(**kwargs)
+
+                    if self.unfreeze_strategy == 'global':
+                        self.unfreeze_k_most_changed_params(
+                            self.n_tunable_params // self.sft_args.n_ft_iterations
+                        )
+                    elif self.unfreeze_strategy == 'layer_wise_selection':
+                        self.unfreeze_k_most_changed_params_per_layer_percentage()
+                    else:
+                        raise ValueError(f"Unknown unfreeze_strategy: {self.unfreeze_strategy}")
+                                    
+                    with torch.no_grad():
+                        for n, p in self.model.named_parameters():
+                            p.copy_(previous_params[n])
+
+                    self.enable_masking()
+                    self.optimizer = None
+                    self.lr_scheduler = None
+                    self.set_training_len(
+                        self.sft_args.sparse_ft_min_steps_per_iteration,
+                        self.sft_args.sparse_ft_max_steps_per_iteration,
+                        self.sft_args.sparse_ft_max_epochs_per_iteration,
+                    )
+                    result = super().train(**kwargs)
             
             return result
 
