@@ -121,15 +121,16 @@ def LotteryTicketSparseFineTuner(_Trainer):
                             logger.info(f'Setting masks for layer {n}')      
                     logger.info(f'Unmasked {n_masked} params in {pattern_str}')
 
-        def unfreeze_k_random_params(self, k):
+        def unfreeze_k_random_params(self, k, freeze_embeddings):
             with torch.no_grad():
                 # Gather all currently frozen (masked) parameter indices
                 frozen_params = []
                 for n, p in self.model.named_parameters():
                     if n in self.maskable_params:
-                        mask_flat = (~self._mask[n]).view(-1).nonzero(as_tuple=False).view(-1)
-                        for idx in mask_flat.tolist():
-                            frozen_params.append((n, idx))
+                        if not freeze_embeddings or 'embedding' not in n:
+                            mask_flat = (~self._mask[n]).view(-1).nonzero(as_tuple=False).view(-1)
+                            for idx in mask_flat.tolist():
+                                frozen_params.append((n, idx))
 
                 if k > len(frozen_params):
                     raise ValueError(
@@ -150,9 +151,9 @@ def LotteryTicketSparseFineTuner(_Trainer):
             result = None
             ## the below is alwys run with single ft iteration
             assert self.sft_args.n_ft_iterations == 1
-            if self.unfreeze_strategy == 'random':
-
-                self.unfreeze_k_random_params(self.n_tunable_params)
+            if 'random' in self.unfreeze_strategy:
+                freeze_embeddings = self.sft_args.unfreeze_strategy == 'random_without_embeddings'
+                self.unfreeze_k_random_params(self.n_tunable_params, freeze_embeddings)
                 
                 # Enable masking since we now have a mask that includes the randomly chosen params
                 self.enable_masking()
