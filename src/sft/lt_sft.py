@@ -135,11 +135,14 @@ def LotteryTicketSparseFineTuner(_Trainer):
                     raise ValueError(
                         f'Was requested to unfreeze {k} params, but only {len(frozen_params)} are masked.'
                     )
-
+                parameters_count = {}
                 chosen_params = random.sample(frozen_params, k)
                 for (n, idx) in chosen_params:
                     self._mask[n].view(-1)[idx] = True
-                logger.info(f'Unmasked {k} random params')       
+                    parameters_count[n] = parameters_count.get(n, 0) + 1
+                logger.info(f'Unmasked {k} random params')
+                print(f'Unmasked {k} random parameters')
+                print(f'parameters_count: {parameters_count}')       
 
 
         def train(self, **kwargs):
