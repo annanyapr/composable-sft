@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Modified by the Cambridge Language Technology Lab
+import json
 import logging
 import math
 import os
@@ -209,6 +210,22 @@ def main():
         model_args, data_args, sft_args, training_args = parser.parse_args_into_dataclasses()
     #if training_args.per_device_train_batch_size != 42:
     #    raise ValueError("Batch size must be 42!!!")
+
+    # Read selected layers from file if provided
+    if sft_args.selected_layers_file is not None:
+        with open(sft_args.selected_layers_file, 'r') as f:
+            selected_layers = json.load(f)
+        logger.info(f"Selected layers for fine-tuning: {selected_layers}")
+    else:
+        selected_layers = None  # Or an empty list if preferred
+
+    # Read per-layer percentages from file if provided
+    if sft_args.per_layer_percentage_file is not None:
+        with open(sft_args.per_layer_percentage_file, 'r') as f:
+            per_layer_percentages = json.load(f)
+        logger.info(f"Per-layer percentages for fine-tuning: {per_layer_percentages}")
+    else:
+        per_layer_percentages = None
 
     # Setup logging
     logging.basicConfig(
@@ -537,6 +554,9 @@ def main():
         eval_dataset=eval_dataset if training_args.do_eval else None,
         tokenizer=tokenizer,
         data_collator=data_collator,
+        unfreeze_strategy=sft_args.unfreeze_strategy,
+        selected_layers=selected_layers,
+        per_layer_percentage=per_layer_percentages,
     )
 
     # Training

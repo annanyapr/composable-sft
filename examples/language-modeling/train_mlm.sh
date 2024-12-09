@@ -1,8 +1,8 @@
 #!/bin/bash
-LANG=bm
+LANG=aym
 
 python run_mlm.py \
-  --model_name_or_path bert-base-multilingual-cased \
+  --model_name_or_path xlm-roberta-base \
   --train_file corpora/${LANG}.txt \
   --output_dir models/${LANG} \
   --do_train \
